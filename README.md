@@ -24,6 +24,10 @@ This fork is specifically made for use on **AMD hardware using ROCm and MIGraphX
 
 For standard CPU/NVIDIA environments, please refer to the upstream repository linked above.
 
+NOTE TO SELF SYNTAX makes it use what is bteween "(/" and "/)" for phonemes when using misaki:  
+\[Misaki\](/misˈɑki/)  
+
+
 ## Original README
 
 TTS with onnx runtime based on [Kokoro-TTS](https://huggingface.co/spaces/hexgrad/Kokoro-TTS)
