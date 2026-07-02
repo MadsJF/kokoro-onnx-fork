@@ -25,3 +25,6 @@ espeak-ng-data/
 
 # Virtual environments
 .venv
+
+# nix build
+result
