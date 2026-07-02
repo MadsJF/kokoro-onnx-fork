@@ -26,6 +26,7 @@ class Kokoro:
         voices_path: str,
         espeak_config: EspeakConfig | None = None,
         vocab_config: dict | str | None = None,
+        force_token_length: bool = False,
     ):
         # Show useful information for bug reports
         log.debug(
@@ -53,6 +54,9 @@ class Kokoro:
 
         vocab = self._load_vocab(vocab_config)
         self.tokenizer = Tokenizer(espeak_config, vocab=vocab)
+
+        self.force_token_length = force_token_length
+        self.target_token_length = MAX_PHONEME_LENGTH-1
 
     @classmethod
     def from_session(
@@ -100,13 +104,30 @@ class Kokoro:
             )
         phonemes = phonemes[:MAX_PHONEME_LENGTH]
         start_t = time.time()
-        tokens = np.array(self.tokenizer.tokenize(phonemes), dtype=np.int64)
-        assert len(tokens) <= MAX_PHONEME_LENGTH, (
+        raw_tokens = np.array(self.tokenizer.tokenize(phonemes), dtype=np.int64)
+        assert len(raw_tokens) <= MAX_PHONEME_LENGTH, (
             f"Context length is {MAX_PHONEME_LENGTH}, but leave room for the pad token 0 at the start & end"
         )
 
-        voice = voice[len(tokens)]
-        tokens = [[0, *tokens, 0]]
+        log.debug(f"Phoneme length: {len(phonemes)}")
+        log.debug(f"Raw token length: {len(raw_tokens)}")
+
+        if self.force_token_length:
+            # pad tokens up to point
+            padded_tokens = [0] * self.target_token_length
+
+            for i, token_id in enumerate(raw_tokens):
+                padded_tokens[i + 1] = token_id
+
+            voice = voice[self.target_token_length]
+            tokens = [padded_tokens]
+        else:
+            tokens = raw_tokens
+            voice = voice[len(tokens)]
+            tokens = [[0, *tokens, 0]]
+
+        log.debug(f"Token length going into model is: {(np.array(tokens, dtype=np.int64)).shape[1]}")
+
         if "input_ids" in [i.name for i in self.sess.get_inputs()]:
             # Newer export versions
             inputs = {
@@ -138,33 +159,63 @@ class Kokoro:
         Split phonemes into batches of MAX_PHONEME_LENGTH
         Prefer splitting at punctuation marks.
         """
+        # safety net for max phonemes
+        safe_ceiling = MAX_PHONEME_LENGTH - 10
+
         # Regular expression to split by punctuation and keep them
         words = re.split(r"([.,!?;])", phonemes)
         batched_phoenemes: list[str] = []
         current_batch = ""
 
-        for part in words:
+        i = 0
+        while i < len(words):
+            part = words[i]
             # Remove leading/trailing whitespace
             part = part.strip()
 
-            if part:
-                # If adding the part exceeds the max length, split into a new batch
-                # TODO: make it more accurate
-                if len(current_batch) + len(part) + 1 >= MAX_PHONEME_LENGTH:
-                    batched_phoenemes.append(current_batch.strip())
-                    current_batch = part
-                else:
-                    if part in ".,!?;":
-                        current_batch += part
-                    else:
-                        if current_batch:
-                            current_batch += " "
-                        current_batch += part
+            if not part:
+                i += 1
+                continue
 
+            # prevent part from being over max length
+            if len(part) + 1 >= MAX_PHONEME_LENGTH:
+                log.debug(f"part length is: {len(part)}")
+                log.debug(f"SPlitting phoneme at part: {i}")
+                split_idx = part.rfind(" ", 0, safe_ceiling)
+
+                if split_idx == -1:
+                        # Emergency fallback: If there are literally NO spaces (one giant word),
+                        # we are forced to hard-split at the ceiling character index
+                        split_idx = safe_ceiling
+
+                first_half = part[:split_idx].strip()
+                second_half = part[split_idx:].strip()
+
+                words[i] = first_half
+                
+                if second_half:
+                    words.insert(i + 1, second_half)
+
+                part = first_half
+                log.debug(f"part updated to have length: {len(part)}")
+
+
+            # If adding the part exceeds the max length, split into a new batch
+            # TODO: make it more accurate
+            if len(current_batch) + len(part) + 1 >= MAX_PHONEME_LENGTH:
+                batched_phoenemes.append(current_batch.strip())
+                current_batch = part
+            else:
+                if part in ".,!?;":
+                    current_batch += part
+                else:
+                    if current_batch:
+                        current_batch += " "
+                    current_batch += part
+            i += 1
         # Append the last batch if it contains any phonemes
         if current_batch:
             batched_phoenemes.append(current_batch.strip())
-
         return batched_phoenemes
 
     def create(
