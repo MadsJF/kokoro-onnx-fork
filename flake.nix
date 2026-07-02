@@ -11,8 +11,25 @@
     nixpkgs,
     flake-utils,
   }:
+  let
+    # 1. Define the overlay at the top level (system-agnostic)
+    # This injects kokoro_onnx straight into Nixpkgs' Python infrastructure
+    kokoro_overlay = final: prev: {
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+        (python-final: python-prev: {
+          kokoro_onnx = python-final.callPackage ./nix/custom_pkgs/kokoro-onnx.nix {
+            espeak-ng = final.espeak-ng;
+          };
+        })
+      ];
+    };
+  in
+    {
+      overlays.default = kokoro_overlay;
+    }
+    //
     flake-utils.lib.eachDefaultSystem (system: let
-      python_kokoro_overlay = final: prev: {
+      python_fugashi_overlay = final: prev: {
         # Patch fugashi to add enviorment variables for UNIDIC_DICDIR and MECABRC_FILE 
         # (way of fixing some max path length for mecab)
         pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
@@ -26,7 +43,7 @@
 
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ python_kokoro_overlay ];
+        overlays = [ kokoro_overlay python_fugashi_overlay ];
       };
       pythonEnv = pkgs.python3;
     in {
