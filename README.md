@@ -1,15 +1,30 @@
-# kokoro-onnx
+# kokoro-onnx-fork
 
 ![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![PyPI Release](https://img.shields.io/pypi/v/kokoro-onnx.svg)](https://pypi.org/project/kokoro-onnx/)
 [![Github Model Releases](https://img.shields.io/github/v/release/thewh1teagle/kokoro-onnx)](https://github.com/thewh1teagle/kokoro-onnx/releases)
 [![License](https://img.shields.io/github/license/thewh1teagle/kokoro-onnx)](https://github.com/thewh1teagle/kokoro-onnx/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/thewh1teagle/kokoro-onnx?style=social)](https://github.com/thewh1teagle/kokoro-onnx/stargazers)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/kokoro-onnx?style=plastic)](https://pypi.org/project/kokoro-onnx/)
 
 [![ONNX Runtime](https://img.shields.io/badge/ONNX%20Runtime-%E2%89%A51.20.1-blue)](https://github.com/microsoft/onnxruntime)
 ![CPU](https://img.shields.io/badge/CPU-supported-brightgreen)
 ![GPU](https://img.shields.io/badge/GPU-supported-brightgreen)
+
+## DISCLAIMER
+**This is a personal fork of the original [kokoro-onnx](https://github.com/theodorevalenzuela/kokoro-onnx) project.** *Note: This fork was created specifically for a personal project. It is provided as-is, and I will only be maintaining or updating it as it suits my own needs.*  
+**Model downloads can be found in the original project**
+
+
+
+### 🚀 What's Different in this Fork?
+This fork is specifically made for use on **AMD hardware using ROCm and MIGraphX**. It is made due to Migrapx requiring static input size.
+
+* **`static_padding` Engine Toggle:** Allows initializing the engine with forced static shape token tensors (`MAX_TOKENS = 510`), keeping execution graphs stable.
+* **Nondestructive Token Auto-Chunking:** Under the hood, phoneme tokens that exceed the maximum constraint are automatically split into ideal sub-sequences and generated sequentially without any text or information loss.
+* **Nix Flake Integration:** Includes complete Nix packaging due to making my life easier.
+
+For standard CPU/NVIDIA environments, please refer to the upstream repository linked above.
+
+## Original README
 
 TTS with onnx runtime based on [Kokoro-TTS](https://huggingface.co/spaces/hexgrad/Kokoro-TTS)
 
