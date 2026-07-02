@@ -20,6 +20,9 @@
           kokoro_onnx = python-final.callPackage ./nix/custom_pkgs/kokoro-onnx.nix {
             espeak-ng = final.espeak-ng;
           };
+          fugashi = python-prev.fugashi.overridePythonAttrs (oldAttrs: {
+            patches = (oldAttrs.patches or []) ++ [ ./nix/patches/fugashi_mecab_path.patch];
+          });
         })
       ];
     };
@@ -29,21 +32,9 @@
     }
     //
     flake-utils.lib.eachDefaultSystem (system: let
-      python_fugashi_overlay = final: prev: {
-        # Patch fugashi to add enviorment variables for UNIDIC_DICDIR and MECABRC_FILE 
-        # (way of fixing some max path length for mecab)
-        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-          (python-final: python-prev: {
-            fugashi = python-prev.fugashi.overridePythonAttrs (oldAttrs: {
-              patches = (oldAttrs.patches or []) ++ [ ./nix/patches/fugashi_mecab_path.patch];
-            });
-          })
-        ];
-      };
-
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ kokoro_overlay python_fugashi_overlay ];
+        overlays = [ kokoro_overlay ];
       };
       pythonEnv = pkgs.python3;
     in {
