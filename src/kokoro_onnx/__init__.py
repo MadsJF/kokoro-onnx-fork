@@ -138,33 +138,63 @@ class Kokoro:
         Split phonemes into batches of MAX_PHONEME_LENGTH
         Prefer splitting at punctuation marks.
         """
+        # safety net for max phonemes
+        safe_ceiling = MAX_PHONEME_LENGTH - 10
+
         # Regular expression to split by punctuation and keep them
         words = re.split(r"([.,!?;])", phonemes)
         batched_phoenemes: list[str] = []
         current_batch = ""
 
-        for part in words:
+        i = 0
+        while i < len(words):
+            part = words[i]
             # Remove leading/trailing whitespace
             part = part.strip()
 
-            if part:
-                # If adding the part exceeds the max length, split into a new batch
-                # TODO: make it more accurate
-                if len(current_batch) + len(part) + 1 >= MAX_PHONEME_LENGTH:
-                    batched_phoenemes.append(current_batch.strip())
-                    current_batch = part
-                else:
-                    if part in ".,!?;":
-                        current_batch += part
-                    else:
-                        if current_batch:
-                            current_batch += " "
-                        current_batch += part
+            if not part:
+                i += 1
+                continue
 
+            # prevent part from being over max length
+            if len(part) + 1 >= MAX_PHONEME_LENGTH:
+                log.debug(f"part length is: {len(part)}")
+                log.debug(f"SPlitting phoneme at part: {i}")
+                split_idx = part.rfind(" ", 0, safe_ceiling)
+
+                if split_idx == -1:
+                        # Emergency fallback: If there are literally NO spaces (one giant word),
+                        # we are forced to hard-split at the ceiling character index
+                        split_idx = safe_ceiling
+
+                first_half = part[:split_idx].strip()
+                second_half = part[split_idx:].strip()
+
+                words[i] = first_half
+                
+                if second_half:
+                    words.insert(i + 1, second_half)
+
+                part = first_half
+                log.debug(f"part updated to have length: {len(part)}")
+
+
+            # If adding the part exceeds the max length, split into a new batch
+            # TODO: make it more accurate
+            if len(current_batch) + len(part) + 1 >= MAX_PHONEME_LENGTH:
+                batched_phoenemes.append(current_batch.strip())
+                current_batch = part
+            else:
+                if part in ".,!?;":
+                    current_batch += part
+                else:
+                    if current_batch:
+                        current_batch += " "
+                    current_batch += part
+            i += 1
         # Append the last batch if it contains any phonemes
         if current_batch:
             batched_phoenemes.append(current_batch.strip())
-
         return batched_phoenemes
 
     def create(
