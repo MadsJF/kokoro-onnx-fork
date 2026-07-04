@@ -1,0 +1,15 @@
+--- a/fugashi/fugashi.pyx
++++ b/fugashi/fugashi.pyx
+@@ -387,6 +387,12 @@ cdef class Tagger(GenericTagger):
+         unidicdir = try_import_unidic()
+         if unidicdir:
+             mecabrc = os.path.join(unidicdir, 'mecabrc')
++            
++            # If an explicit shortcut environment variable is set, override the long Nix path
++            if "UNIDIC_DICDIR" in os.environ:
++                unidicdir = os.environ["UNIDIC_DICDIR"]
++            if "MECABRC_FILE" in os.environ:
++                mecabrc = os.environ["MECABRC_FILE"]
+             arg = '-r "{}" -d "{}" '.format(mecabrc, unidicdir) + arg
+ 
+         super().__init__(arg)

@@ -1,0 +1,22 @@
+--- a/src/kokoro_onnx/tokenizer.py
++++ b/src/kokoro_onnx/tokenizer.py
+@@ -3,7 +3,6 @@
+ import platform
+ import sys
+ 
+-import espeakng_loader
+ import phonemizer
+ from phonemizer.backend.espeak.wrapper import EspeakWrapper
+ 
+@@ -16,9 +15,9 @@
+         if not espeak_config:
+             espeak_config = EspeakConfig()
+         if not espeak_config.data_path:
+-            espeak_config.data_path = espeakng_loader.get_data_path()
++            espeak_config.data_path = "@espeak-data-path@"
+         if not espeak_config.lib_path:
+-            espeak_config.lib_path = espeakng_loader.get_library_path()
++            espeak_config.lib_path = "@espeak-library-path@"
+ 
+         # Check if PHONEMIZER_ESPEAK_LIBRARY was set
+         if os.getenv("PHONEMIZER_ESPEAK_LIBRARY"):

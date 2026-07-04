@@ -1,3 +1,6 @@
+# vscode auto generated files
+.vscode/
+
 # Python-generated files
 __pycache__/
 *.py[oc]
@@ -25,3 +28,9 @@ espeak-ng-data/
 
 # Virtual environments
 .venv
+
+# nix build
+result
+
+# stuff used for testing
+TESTING/
