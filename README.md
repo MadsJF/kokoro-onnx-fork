@@ -10,6 +10,10 @@
 ![GPU](https://img.shields.io/badge/GPU-supported-brightgreen)
 
 ## DISCLAIMER
+### THIS ATTEMPT FAILED
+It failed due to the kokoro-82m causing weird audio generation if one just pads the input to the model with tokens with an id of 0.  
+If there was a fix for the model, either some mask to make it ignore the padding tokens, or if the model ignored tokens with some specific id it could probably succeed.
+
 **This is a personal fork of the original [kokoro-onnx](https://github.com/theodorevalenzuela/kokoro-onnx) project.** *Note: This fork was created specifically for a personal project. It is provided as-is, and I will only be maintaining or updating it as it suits my own needs.*  
 **Model downloads can be found in the original project**
 
